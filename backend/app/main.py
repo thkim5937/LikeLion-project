@@ -32,11 +32,12 @@ def _row_to_todo(row):
 
 
 @app.get("/api/todos")
-def read_todos():
+def read_todos(
     # TODO(learner): Implement list todos using SQLite queries in this file.
     #initiating a connection to the database
     completed: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
+):
     query = "SELECT * FROM todos WHERE 1=1"
     params = []
     if completed is not None:
@@ -47,13 +48,13 @@ def read_todos():
         query += " And title LIKE ?"
         params.append(f"%{search}%")
         
-    query+= "ORDER BY id DESC"
+    query+= " ORDER BY id DESC"
     
     connection = get_connection()
-    rows = connection.execute(query, params).fetchall
+    rows = connection.execute(query, params).fetchall()
     todos = []
     for row in rows:
-        todos.appent(_row_to_todo(row))
+        todos.append(_row_to_todo(row))
     return todos
    
     
@@ -68,7 +69,8 @@ def read_overdue_todos():
             AND due_date<?
             AND completed=0
         ORDER BY due_date ASC
-        """
+        """,
+        (now,),
     )
     todos = []
     for row in rows:
@@ -82,7 +84,7 @@ def todo_stats():
     
     total = connection.execute("SELECT COUNT(*) FROM todos").fetchone()[0]
     completed_count = connection.execute("SELECT COUNT(*) FROM todos WHERE completed=1").fetchone()[0]
-    pending = connection.execute("SELECT COUNT(*) FROM todos WHERE completed=0").fetchone[0]
+    pending = connection.execute("SELECT COUNT(*) FROM todos WHERE completed=0").fetchone()[0]
     
     overdue = connection.execute(
     """
@@ -108,7 +110,7 @@ def read_todo(todo_id):
         row = connection.execute("SELECT * FROM todos WHERE id=?", (todo_id,)).fetchone()
     
     if row is None:
-        raise HTTPException(status_code=404, detail="no data found")
+        raise HTTPException(status_code=404, detail="Todo not found")
     return _row_to_todo(row)
     
     
@@ -163,10 +165,10 @@ def edit_todo(todo_id, payload: dict):
     if due_date is not None:
         due_date = str(due_date).strip()
         try:
-            daytime.fromisoformat(due_date)
-        except:
+            datetime.fromisoformat(due_date)
+        except ValueError:
             raise HTTPException(
-                status_code=400
+                status_code=400,
                 detail = "due_date must be a valid ISO 8601 datetime string"
             )
     with get_connection() as connection:
@@ -175,8 +177,9 @@ def edit_todo(todo_id, payload: dict):
             UPDATE todos
             SET title=?, description=?, completed=?, due_date=?
             WHERE id=?
+            """,
             (title, description, int(completed), due_date, todo_id)
-            """
+            
         )
         connection.commit()
         if cursor.rowcount ==0:
@@ -188,13 +191,15 @@ def edit_todo(todo_id, payload: dict):
     
 @app.delete("/api/todos/completed")
 def remove_completed_todos():
-    with get_connection as connection:
-        cursor = connection.execute(
-            "DELETE FROM todos WHERE completed=1"
-        )
+    with get_connection() as connection:
+        cursor = connection.execute("DELETE FROM todos WHERE completed = 1")
         connection.commit()
-        deleted_count=cursor.rowcount
-        return ("message:": f"Successfully deleted {deleted_count} completed todos")
+
+    # cursor.rowcount tells us how many rows the DELETE statement removed
+    return {"deleted": cursor.rowcount}
+    
+    
+    
 
 @app.delete("/api/todos/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_todo(todo_id):

@@ -4,7 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Todo Starter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css" />
     <link rel="stylesheet" href="/style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
   </head>
   <body>
     <main class="container">
@@ -13,15 +15,23 @@
 
       <section class="card">
         <h2>Create Todo</h2>
-        <form id="todo-form">
+        <form id="todo-form" novalidate>
           <label>
             Title
-            <input id="title" name="title" required maxlength="120" />
+            <input id="title" name="title" maxlength="120" />
           </label>
           <label>
             Description
             <textarea id="description" name="description" rows="3" maxlength="240"></textarea>
           </label>
+          <label>
+            Due date (optional)
+            <div class="due-date-group">
+              <input type="text" id="due-date-time-input" placeholder="Select date &amp; time (optional)" />
+              <button type="button" id="due-date-clear" class="link-button">Clear</button>
+            </div>
+          </label>
+          <p id="form-error" class="field-error" role="alert"></p>
           <button type="submit">Add Todo</button>
         </form>
       </section>
@@ -30,6 +40,33 @@
         <div class="header-row">
           <h2>Todo List</h2>
           <button id="refresh-btn" type="button">Refresh</button>
+        </div>
+        <div id="filter-bar" class="filter-bar">
+          <select id="filter-completed">
+            <option value="">All</option>
+            <option value="true">Completed</option>
+            <option value="false">Pending</option>
+          </select>
+          <input type="text" id="filter-search" placeholder="Search by title..." />
+          <button type="button" id="delete-completed-btn">Delete Completed</button>
+        </div>
+        <div id="stats-bar" class="stats-bar">
+          <div class="stat" data-stat="total">
+            <span class="stat-label">Total</span>
+            <span class="stat-value" id="stat-total">0</span>
+          </div>
+          <div class="stat" data-stat="completed">
+            <span class="stat-label">Completed</span>
+            <span class="stat-value" id="stat-completed">0</span>
+          </div>
+          <div class="stat" data-stat="pending">
+            <span class="stat-label">Pending</span>
+            <span class="stat-value" id="stat-pending">0</span>
+          </div>
+          <div class="stat" data-stat="overdue">
+            <span class="stat-label">Overdue</span>
+            <span class="stat-value" id="stat-overdue">0</span>
+          </div>
         </div>
         <ul id="todo-list"></ul>
       </section>
